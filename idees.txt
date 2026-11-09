@@ -1,0 +1,19 @@
+- Comparacio entre canals
+
+- Ventes 2021-2024 
+
+- Que fa que es vengen més productes:
+    - marketing
+    - descomptes
+    - altres factors
+
+columnes a comparar:
+
+- marketing spend + marketing budget
+- avg discount + planned discount
+- stock units + sales units
+- stock units + closing stock units
+- website sessions + marketing spend
+- marketing budget + website sessions
+- sales units vs list price
+- stock units vs list price
