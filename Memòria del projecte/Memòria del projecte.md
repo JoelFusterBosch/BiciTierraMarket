@@ -40,6 +40,10 @@
             - [Variables del clustering i K-Means](#variables-del-clustering-i-k-means)
             - [Perfils obtinguts](#perfils-obtinguts)
             - [Accions comercials per perfil](#accions-comercials-per-perfil)
+        * [Bloc 4: Prova final i previsió](#bloc-4-prova-final-i-previsió)
+            - [Previsió de juliol 2026](#previsió-de-juliol-2026)
+            - [Recomanació d'estoc](#recomanació-destoc)
+            - [Recomanació de campanya](#recomanació-de-campanya)
     + [Dificultats i futures millores](#dificultats-i-futures-millores)
         * [Dificultats](#dificultats)
         * [Futures millores](#futures-millores)
@@ -193,7 +197,7 @@ Per reproduir l'estudi complet des de zero, cal executar els quaderns en l'ordre
    - `prova_visualitzacions.ipynb` (evidències gràfiques i comprovació d'imputacions).
 2. **Segmentació i lliurables:**
    - `cp3.ipynb` (execució del clustering K-Means, anàlisi de *silhouette* i simulació d'accions comercials).
-   - `memoria.ipynb` (síntesi executiva i resultats consolidats).
+   - `evidencies/prediccio_juliol_2026.ipynb` (previsió de juliol 2026, recomanació d'estoc i de campanya).
 
 ## Funcionament i resultats del projecte
 
@@ -201,7 +205,7 @@ A continuació es detallen els resultats obtinguts en cadascun dels tres blocs p
 
 ### Bloc 1: Plantejament del problema i exploració
 
-L'anàlisi inicial es centra en `sales_history.csv` (1.188 registres), prenent `sales_units` com a variable objectiu i `marketing_spend` i `avg_discount` com a predictors principals.
+L'anàlisi inicial es centra en `sales_history.csv` (1.188 registres), prenent `sales_units` com a variable objectiu i el màrqueting i el descompte com a factors principals a estudiar. Per a predir s'usen els seus valors planificats (`marketing_budget` i `planned_discount`), perquè `marketing_spend` i `avg_discount` només es coneixen en tancar el mes (vegeu el Bloc 2).
 
 <p align="center">
     <img src="./imatges/Matriu_de_correlació.png" alt="Matriu de correlació" width="600">
@@ -242,7 +246,8 @@ Abans d'entrenar cap model definitiu, s'aplica un protocol estricte d'imputació
 | `sales_history.csv` | `website_sessions` | **Mitjana** | Sempre hi ha trànsit web mensual, especialment al canal *ecommerce*. |
 | `sales_history.csv` | `avg_discount`, `planned_discount` | **`0`** | Un valor buit indica venda a preu complet (sense descompte). |
 | `customers.csv` | `age` | **Mitjana** | Un client comprador no pot tindre 0 anys, així es manté la coherència demogràfica. |
-| `customers.csv` | `annual_spend`, `days_since_last_order` | **`0`** (en revisió inicial) | Interpretat inicialment com a absència de compra o compra el mateix dia (refinat a la fase 3). |
+| `customers.csv` | `annual_spend` | **Es recalcula** | És $	ext{tiquet mitjà} 	imes 	ext{comandes}$, així que es pot calcular exactament (vegeu el Bloc 3). |
+| `customers.csv` | `days_since_last_order` | **S'exclouen les 20 files** | Un `0` voldria dir "ha comprat hui", que és fals (vegeu el Bloc 3). |
 
 > **Risc de mala imputació:** Posar `0` en lloc de la mitjana a `sales_units` crearia valors extrems artificials (*outliers*), ja que cap sèrie baixa mai a zero vendes, empitjorant el MAE, l'MSE i el R2.
 
@@ -322,6 +327,62 @@ Dels cinc clústers generats, destaquen **dos perfils estratègics** (valors exp
 | **Fidels freqüents** | Programa de fidelitat amb accés anticipat a novetats i avantatges per volum en accessoris i manteniment, centrat en *mountain* i *electric*. | Mantenir la freqüència de compra i evitar la fuga cap a la inactivitat. |
 | **Tiquet alt** | Campanya personalitzada en `black_friday` o `christmas` amb bicicleta elèctrica, opcions de finançament i servei postvenda prioritari. | Augmentar la taxa de resposta i protegir el valor de cada transacció. |
 
+### Bloc 4: Prova final i previsió
+
+#### Previsió de juliol 2026
+
+S'aplica el **model congelat** (Ridge, `alpha = 300`, entrenat amb 2022–2024) als 18 casos de `sales_forecast_input.csv` (una fila per combinació de canal, línia de producte i regió). Les prediccions es limiten entre $0$ i l'estoc inicial (`stock_units`) i es guarden a `evidencies/prediccions_juliol_2026.csv` (codi a `evidencies/prediccio_juliol_2026.ipynb`), amb la columna `venda_real` buida (s'omplirà quan acabe juliol) i `tipus = previsió` per no confondre-les amb vendes reals.
+
+| Canal | Línia | Regió | Previsió (u.) |
+|:---|:---|:---|---:|
+| ecommerce | electric | coast | 106 |
+| ecommerce | electric | inland | 76 |
+| ecommerce | electric | metro | 105 |
+| ecommerce | mountain | coast | 157 |
+| ecommerce | mountain | inland | 110 |
+| ecommerce | mountain | metro | 188 |
+| ecommerce | urban | coast | 214 |
+| ecommerce | urban | inland | 154 |
+| ecommerce | urban | metro | 190 |
+| store | electric | coast | 92 |
+| store | electric | inland | 45 |
+| store | electric | metro | 102 |
+| store | mountain | coast | 134 |
+| store | mountain | inland | 111 |
+| store | mountain | metro | 108 |
+| store | urban | coast | 168 |
+| store | urban | inland | 112 |
+| store | urban | metro | 190 |
+
+#### Recomanació d'estoc
+
+**Reforçar l'estoc (≈ +15 %) en les 6 combinacions on la previsió arriba al 94–100 % de l'estoc**, sobretot en botiga. En canvi, *ecommerce urban coast* i *ecommerce electric metro* en tenen de sobra (s'usa ≈ 60 %) i poden cedir-ne.
+
+| Canal | Línia | Regió | Estoc inicial | Previsió | Ús de l'estoc |
+|:---|:---|:---|---:|---:|---:|
+| store | urban | inland | 112 | 112 | 100 % |
+| store | mountain | metro | 108 | 108 | 100 % |
+| store | electric | inland | 45 | 45 | 100 % |
+| store | mountain | coast | 136 | 134 | 99 % |
+| ecommerce | urban | inland | 159 | 154 | 97 % |
+| ecommerce | mountain | inland | 117 | 110 | 94 % |
+
+- **Per què:** juliol és el mes amb més rotures d'estoc (≈ 37 % dels juliols anteriors), i en 4 combinacions la previsió ja toca el límit, així que la demanda real pot ser més alta.
+- **Confiança: mitjana.** L'error és d'≈ 12 u. per combinació en validació i puja a ≈ 16 u. en la prova final (gener–juny 2026), i el model **es queda curt** en mesos forts. Quan es ven tot l'estoc no sabem la demanda real.
+
+#### Recomanació de campanya
+
+**Mantindre la campanya *summer* i estendre-la a les 2 combinacions que no en tenen** (*ecommerce urban metro* i *ecommerce electric metro*), que a més tenen estoc de sobra. **No pujar** el pressupost de màrqueting ni el descompte.
+
+| Palanca | Unitats extra per combinació (a igualtat de la resta) |
+|:---|---:|
+| Campanya *summer* (vs cap campanya) | ≈ +11 |
+| +1.000 € de màrqueting | ≈ +3 |
+| +5 punts de descompte | ≈ +3 |
+
+- **Per què:** *summer* aporta molt més que les altres palanques, i el màrqueting i el descompte costen diners.
+- **Confiança: baixa.** Les dades són sintètiques: el model aprèn relacions, **no demostra causes**. A més, *summer* només apareix a l'estiu, així que una part de l'efecte pot ser de la temporada i no de la campanya.
+
 ## Dificultats i futures millores
 
 ### Dificultats
@@ -346,4 +407,4 @@ D'una banda, s'ha demostrat que l'estacionalitat (`lag_12`) és un factor determ
 - Documentació oficial de Pandas: https://pandas.pydata.org/docs/
 - Documentació oficial de Scikit-learn (Regressió i Clustering K-Means): https://scikit-learn.org/stable/
 - Documentació oficial de NumPy: https://numpy.org/doc/
-- Quaderns de treball del projecte: `memoria.ipynb`, `cp3.ipynb`, `customers.ipynb`, `clean_saleshistory.ipynb` i `prova_visualitzacions.ipynb`.
+- Quaderns de treball del projecte: `cp3.ipynb`, `prediccio_juliol_2026.ipynb`, `customers.ipynb`, `clean_saleshistory.ipynb` i `prova_visualitzacions.ipynb`.
