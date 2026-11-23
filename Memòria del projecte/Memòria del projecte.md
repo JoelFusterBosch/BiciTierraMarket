@@ -41,12 +41,14 @@
             - [Perfils obtinguts](#perfils-obtinguts)
             - [Accions comercials per perfil](#accions-comercials-per-perfil)
         * [Bloc 4: Prova final i previsió](#bloc-4-prova-final-i-previsió)
+            - [Model triat i prova final](#model-triat-i-prova-final)
             - [Previsió de juliol 2026](#previsió-de-juliol-2026)
             - [Recomanació d'estoc](#recomanació-destoc)
             - [Recomanació de campanya](#recomanació-de-campanya)
     + [Dificultats i futures millores](#dificultats-i-futures-millores)
         * [Dificultats](#dificultats)
         * [Futures millores](#futures-millores)
+    + [Repartiment del treball](#repartiment-del-treball)
     + [Conclusió](#conclusió)
     + [Bibliografia](#bibliografia)
 
@@ -54,7 +56,7 @@
 ## Introducció
 **BiciTierraMarket** és un projecte d'anàlisi de dades i aprenentatge automàtic (*Machine Learning*) orientat a optimitzar l'estratègia comercial i la gestió d'estocs d'una empresa de venda de bicicletes.
 
-El projecte respon a la pregunta principal de negoci: **què fa que venguem més unitats: el màrqueting, els descomptes o altres factors?** Per donar-hi resposta, la solució es divideix en doss grans línies de treball:
+El projecte respon a la pregunta principal de negoci: **què fa que venguem més unitats: el màrqueting, els descomptes o altres factors?** Per donar-hi resposta, la solució es divideix en dos grans línies de treball:
 
 - **Predicció de vendes (`sales_units`):** Desenvolupament d'un flux de treball reproduïble per predir la demanda mensual per canal, línia de producte i regió, establint llistons de referència (*baselines*) i evitant la fuga de dades (*data leakage*).
 - **Segmentació de clients:** Identificació de perfils de compra mitjançant tècniques de *clustering* sobre la base de clients (`customers.csv`) per dissenyar campanyes personalitzades, serveis i prioritats comercials.
@@ -125,7 +127,7 @@ Seguidament, comparem les estratègies per agrupar els 2.000 clients de la compa
 
 En el nostre equip hem acordat adoptar les següents estratègies:
 
-- **Per a la predicció de vendes:** Descartem la classificació pels errors en les fronteres de decisió i treballem exclusivament amb **regressió**, utilitzant la regressió lineal com a base interpretable i models no lineals (polinomial de grau 2 i *Gradient Boosting*) com a alternatives, avaluant-los amb **MAE** i **WAPE** (i $R^2$ en exploració).
+- **Per a la predicció de vendes:** Descartem la classificació pels errors en les fronteres de decisió i treballem exclusivament amb **regressió**, utilitzant la regressió lineal com a base interpretable i models no lineals (polinomial de grau 2 i *Gradient Boosting*) com a alternatives, avaluant-los amb **MAE** i **WAPE** (i $R^2$ en exploració). Després de comparar-los en la validació de 2025, el model triat és una regressió lineal **Ridge** (`alpha = 300`): manté la interpretació de la lineal, però la penalització evita que sobreajuste (vegeu el Bloc 4).
 - **Per a la segmentació:** Seleccionem **K-Means amb $k = 5$**, ja que aporta molt més detall operatiu que les regles manuals, permetent distingir dos palanques clau de negoci: volum de compres (*Fidels freqüents*) front a import per compra (*Tiquet alt*).
 
 ## Requisits del sistema
@@ -197,6 +199,7 @@ Per reproduir l'estudi complet des de zero, cal executar els quaderns en l'ordre
    - `prova_visualitzacions.ipynb` (evidències gràfiques i comprovació d'imputacions).
 2. **Segmentació i lliurables:**
    - `cp3.ipynb` (execució del clustering K-Means, anàlisi de *silhouette* i simulació d'accions comercials).
+   - `cp5.ipynb` (prova final del model Ridge amb gener–juny 2026).
    - `evidencies/prediccio_juliol_2026.ipynb` (previsió de juliol 2026, recomanació d'estoc i de campanya).
 
 ## Funcionament i resultats del projecte
@@ -245,9 +248,11 @@ Abans d'entrenar cap model definitiu, s'aplica un protocol estricte d'imputació
 | `sales_history.csv` | `marketing_spend`, `marketing_budget` | **Mitjana** | L'empresa manté una inversió recurrent; un `0` distorsionaria la realitat. |
 | `sales_history.csv` | `website_sessions` | **Mitjana** | Sempre hi ha trànsit web mensual, especialment al canal *ecommerce*. |
 | `sales_history.csv` | `avg_discount`, `planned_discount` | **`0`** | Un valor buit indica venda a preu complet (sense descompte). |
-| `customers.csv` | `age` | **Mitjana** | Un client comprador no pot tindre 0 anys, així es manté la coherència demogràfica. |
-| `customers.csv` | `annual_spend` | **Es recalcula** | És $	ext{tiquet mitjà} 	imes 	ext{comandes}$, així que es pot calcular exactament (vegeu el Bloc 3). |
+| `customers.csv` | `age` | **Es deixa tal qual** | Només s'usa per a descriure els perfils. |
+| `customers.csv` | `annual_spend` | **Es recalcula** | És tiquet mitjà × comandes, així que es pot calcular exactament (vegeu el Bloc 3). |
 | `customers.csv` | `days_since_last_order` | **S'exclouen les 20 files** | Un `0` voldria dir "ha comprat hui", que és fals (vegeu el Bloc 3). |
+
+> **Nota:** En el model final (Ridge), els nuls de `marketing_budget` i `planned_discount` s'omplin amb la mediana de l'entrenament (2022–2024), perquè no use informació del futur.
 
 > **Risc de mala imputació:** Posar `0` en lloc de la mitjana a `sales_units` crearia valors extrems artificials (*outliers*), ja que cap sèrie baixa mai a zero vendes, empitjorant el MAE, l'MSE i el R2.
 
@@ -293,7 +298,7 @@ Aquest bloc analitza `customers.csv` (2.000 clients a 30/06/2026) per definir pe
 |:---|:---|:---|
 | **Nuls en `annual_spend`** (30 files) | La despesa anual és $\text{tiquet mitjà} \times \text{comandes}$ | Es **recalcula** exactament. No s'imputa amb $0$ ni amb la mitjana. |
 | **Nuls en `days_since_last_order`** (20 files, $\approx 1\%$) | Un `0` significaria "ha comprat avui" (valor real) | **No es posa `0`:** s'exclouen aquestes 20 files del *clustering* (queden $1.980$ clients). |
-| **Nuls en `age`** (20 files) | No s'usa per agrupar | Es deixa tal qual; només s'utilitza per descriure els perfils a posteriori. |
+| **Nuls en `age`** (20 files) | No s'usa per agrupar | Es deixa tal qual; només s'usa per a descriure els perfils. |
 | **Valors extrems** | `avg_order_value` té cua llarga a la dreta (tiquets $> 1.000\text{ €}$) | **No s'eliminen:** són els clients més valuosos. S'aplica transformació `log`. |
 
 #### Variables del clustering i K-Means
@@ -328,6 +333,34 @@ Dels cinc clústers generats, destaquen **dos perfils estratègics** (valors exp
 | **Tiquet alt** | Campanya personalitzada en `black_friday` o `christmas` amb bicicleta elèctrica, opcions de finançament i servei postvenda prioritari. | Augmentar la taxa de resposta i protegir el valor de cada transacció. |
 
 ### Bloc 4: Prova final i previsió
+
+#### Model triat i prova final
+
+El model triat és una regressió **Ridge** (`alpha = 300`), entrenada amb 2022–2024.
+
+**Validació 2025** (`cp3.ipynb`, secció 5.3):
+
+| Model | MAE (unitats) | WAPE (%) |
+|:---|---:|---:|
+| **Ridge (`alpha = 300`)** | **11,92** | **11,49 %** |
+| Mateix mes de l'any anterior (`lag_12`) | 17,40 | 16,77 % |
+| Mitjana de la sèrie | 18,75 | 18,06 % |
+
+**Prova final gener–juny 2026** (`cp5.ipynb`):
+
+| Model | MAE (unitats) | WAPE (%) |
+|:---|---:|---:|
+| **Ridge (`alpha = 300`)** | **16,28** | **13,7 %** |
+| Mateix mes de l'any anterior (`lag_12`) | 21,24 | 17,8 % |
+
+**Errors més grans:** els dos casos són *ecommerce · urban · metro*:
+
+| Mes | Venda real | Predicció | Error |
+|:---|---:|---:|---:|
+| Abril 2026 | 328 | 219 | 109 |
+| Març 2026 | 230 | 180 | 50 |
+
+El model **es queda curt en els mesos forts**: quan les vendes pugen molt, prediu menys del que es ven.
 
 #### Previsió de juliol 2026
 
@@ -392,19 +425,29 @@ S'aplica el **model congelat** (Ridge, `alpha = 300`, entrenat amb 2022–2024) 
 
 ### Futures millores
 
-- **Entrenament de models avançats de regressió:** Desenvolupar i ajustar hiperparàmetres de models no lineals (com *Gradient Boosting* o *Random Forest*) incorporant els `lags` temporals per baixar del llistó marcat per `lag_12` ($\text{MAE} < 17,40$).
+- **Models no lineals:** Provar models no lineals (*Gradient Boosting*, *Random Forest*) per a reduir l'error en els mesos de vendes altes, que és on el model Ridge es queda curt.
 - **Validació experimental (Test A/B):** Les taxes de resposta de les accions comercials de `cp3.ipynb` són simulades, aleshores cal implementar grups de control reals per mesurar l'impacte real en taxa de resposta, comandes i tiquet mitjà abans d'escalar les campanyes, tractant amb cautela els clients fronterers (*Silhouette* baix).
 - **Anàlisi longitudinal de clients:** Incorporar múltiples fotografies temporals per estudiar la retenció i evolució dels segments.
+
+## Repartiment del treball
+
+| Persona | Tasques |
+|:---|:---|
+| **Joel** | [tasques] |
+| **Sofia** | [tasques] |
+| **Sonia** | Regressió logística multiclasse; *baseline*, model alternatiu i mètrica; resum del CP1. Llista de predictors i resultats de les referències. Comparativa de models i decisió final abans d'obrir el test: model Ridge (`cp3.ipynb`, secció 5). Previsió de juliol 2026 i recomanacions d'estoc i de campanya amb el seu grau de confiança (Bloc 4). Presentació en Canva. |
 
 ## Conclusió
 
 El projecte **BiciTierraMarket** ha permès establir una metodologia rigorosa, reproduïble i lliure de fuga de dades per abordar dos reptes crítics del negoci: la previsió de la demanda i el coneixement del client. 
 
-D'una banda, s'ha demostrat que l'estacionalitat (`lag_12`) és un factor determinant que situa el llistó predictiu en un MAE de $17,40$ unitats. D'altra banda, la segmentació mitjançant K-Means ($k=5$) ha permès separar clarament els clients que generen valor per **volum** (*Fidels freqüents*) dels que ho fan per **marge per operació** (*Tiquet alt*), proporcionant una base sòlida per orientar la inversió en màrqueting i fidelització.
+D'una banda, s'ha demostrat que l'estacionalitat (`lag_12`) és un factor determinant que situa el llistó predictiu en un MAE de $17,40$ unitats. El model Ridge redueix aquest error a **$11,92$ unitats** en validació ($16,28$ en la prova final, davant $21,24$ de la referència). D'altra banda, la segmentació mitjançant K-Means ($k=5$) ha permès separar clarament els clients que generen valor per **volum** (*Fidels freqüents*) dels que ho fan per **marge per operació** (*Tiquet alt*), proporcionant una base sòlida per orientar la inversió en màrqueting i fidelització.
+
+**Responent a la pregunta principal:** el que més pesa és el canal, la línia, la regió i el mes; després, la campanya *summer* (≈ +11 u.), i molt per darrere el màrqueting i el descompte (≈ +3 u. cadascun).
 
 ## Bibliografia
 
 - Documentació oficial de Pandas: https://pandas.pydata.org/docs/
 - Documentació oficial de Scikit-learn (Regressió i Clustering K-Means): https://scikit-learn.org/stable/
 - Documentació oficial de NumPy: https://numpy.org/doc/
-- Quaderns de treball del projecte: `cp3.ipynb`, `prediccio_juliol_2026.ipynb`, `customers.ipynb`, `clean_saleshistory.ipynb` i `prova_visualitzacions.ipynb`.
+- Quaderns de treball del projecte: `cp3.ipynb`, `cp5.ipynb`, `prediccio_juliol_2026.ipynb`, `customers.ipynb`, `clean_saleshistory.ipynb` i `prova_visualitzacions.ipynb`.
