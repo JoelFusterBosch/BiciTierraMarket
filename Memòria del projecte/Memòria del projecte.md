@@ -50,7 +50,7 @@
 ## Introducció
 **BiciTierraMarket** és un projecte d'anàlisi de dades i aprenentatge automàtic (*Machine Learning*) orientat a optimitzar l'estratègia comercial i la gestió d'estocs d'una empresa de venda de bicicletes.
 
-El projecte respon a la pregunta principal de negoci: **què fa que venguem més unitats: el màrqueting, els descomptes o altres factors?** Per donar-hi resposta, la solució es divideix en dues grans línies de treball:
+El projecte respon a la pregunta principal de negoci: **què fa que venguem més unitats: el màrqueting, els descomptes o altres factors?** Per donar-hi resposta, la solució es divideix en doss grans línies de treball:
 
 - **Predicció de vendes (`sales_units`):** Desenvolupament d'un flux de treball reproduïble per predir la demanda mensual per canal, línia de producte i regió, establint llistons de referència (*baselines*) i evitant la fuga de dades (*data leakage*).
 - **Segmentació de clients:** Identificació de perfils de compra mitjançant tècniques de *clustering* sobre la base de clients (`customers.csv`) per dissenyar campanyes personalitzades, serveis i prioritats comercials.
@@ -122,7 +122,7 @@ Seguidament, comparem les estratègies per agrupar els 2.000 clients de la compa
 En el nostre equip hem acordat adoptar les següents estratègies:
 
 - **Per a la predicció de vendes:** Descartem la classificació pels errors en les fronteres de decisió i treballem exclusivament amb **regressió**, utilitzant la regressió lineal com a base interpretable i models no lineals (polinomial de grau 2 i *Gradient Boosting*) com a alternatives, avaluant-los amb **MAE** i **WAPE** (i $R^2$ en exploració).
-- **Per a la segmentació:** Seleccionem **K-Means amb $k = 5$**, ja que aporta molt més detall operatiu que les regles manuals, permetent distingir dues palanques clau de negoci: volum de compres (*Fidels freqüents*) front a import per compra (*Tiquet alt*).
+- **Per a la segmentació:** Seleccionem **K-Means amb $k = 5$**, ja que aporta molt més detall operatiu que les regles manuals, permetent distingir dos palanques clau de negoci: volum de compres (*Fidels freqüents*) front a import per compra (*Tiquet alt*).
 
 ## Requisits del sistema
 
@@ -139,7 +139,7 @@ Aquest apartat detalla les capacitats funcionals i les restriccions tècniques i
 
 - **Reproduïbilitat estricta:** L'execució seqüencial del codi amb una llavor fixa (`seed`) ha de produir exactament els mateixos resultats.
 - **Integritat de les dades originals:** Mai s'han de sobreescriure els fitxers CSV d'entrada (`sales_history.csv`, `customers.csv`); tots els canvis es guarden en fitxers derivats.
-- **Restricció física de negoci:** Totes les prediccions de vendes s'han d'acotar obligatòriament dins l'interval [0,stock_units], ja que és físicament impossible vendre per sobre de l'estoc disponible.
+- **Restricció física de negoci:** Totes les prediccions de vendes s'han d'acotar obligatòriament dins l'interval [0, stock_units], ja que és físicament impossible vendre per sobre de l'estoc disponible.
 
 ## Arquitectura del sistema i flux de dades
 
@@ -268,7 +268,7 @@ S'aplica una partició temporal estricta:
 - **Entrenament:** 2022–2024 (2021 s'exclou per poder disposar de `lag_12`).
 - **Validació:** 2025 (el conjunt de prova de 2026 es reserva intacte).
 
-En avaluar dues regles simples sobre el conjunt de validació de 2025, obtenim els següents llistons:
+En avaluar dos regles simples sobre el conjunt de validació de 2025, obtenim els següents llistons:
 
 | Referència | Descripció | MAE (unitats) | WAPE (%) |
 |:---|:---|---:|---:|
@@ -301,7 +301,7 @@ Per al model K-Means s'utilitzen **quatre variables** escalades (mitjana $0$, de
 
 *Nota:* Es descarten `annual_spend` i `returned_orders_last_12m` per evitar redundància i col·linealitat, mentre que variables demogràfiques (`age`, `city`, `bike_interest`, etc.) es reserven per a la interpretació.
 
-Després d'avaluar $k \in [2, 8]$ mitjançant el mètode del colze i el coeficient *Silhouette*, **s'escull $k = 5$**:
+Després d'avaluar $k \in [2, 8]$ ($\in$ significa `pertinença`[`pertanyer`] en matemàtiques) mitjançant el mètode del colze i el coeficient *Silhouette*, **s'escull $k = 5$**:
 - Amb $k = 4$ es barregen els clients de tiquet molt alt amb els d'alta freqüència.
 - Amb $k = 6$ no apareix cap perfil nou que sigui útil.
 - Amb $k = 5$ s'obté un *Silhouette* de $\approx 0,34$ (modest, amb un $\approx 3\%$ de clients fronterers amb *Silhouette* negatiu, però amb 5 grups clarament accionables).
