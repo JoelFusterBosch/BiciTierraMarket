@@ -63,15 +63,40 @@ El projecte respon a la pregunta principal de negoci: **què fa que venguem més
 
 ## Tecnologies
 ### Python
+
+<p align="center">
+    <img src="./imatges/python.png" alt="Python" width="300">
+</p>
+<p align="center"><em>Fig 1: Python</em></p>
+
 Python és el llenguatge de programació principal utilitzat en tot el projecte per la seua versatilitat, sintaxi clara i el seu ampli ecosistema de llibreries orientades a la ciència de dades i la intel·ligència artificial.
 
 ### Pandas i NumPy
+
+<p align="center">
+    <img src="./imatges/numpy.png" alt="Numpy" width="300">
+    <img src="./imatges/pandas.png" alt="Pandas" width="300">
+</p>
+<p align="center"><em>Fig 2 i 3: Numpy i Pandas</em></p>
+
 Hem emprat **Pandas** i **NumPy** per a la càrrega, manipulació, neteja i transformació dels conjunts de dades tabulars (`sales_history.csv`, `customers.csv` i `sales_forecast_input.csv`), així com per al càlcul de retards temporals (*lags*) i imputacions de valors nuls.
 
 ### Scikit-learn
+
+<p align="center">
+    <img src="./imatges/sklearn.png" alt="Scikit-Learn" width="300">
+</p>
+<p align="center"><em>Fig 4: Scikit-Learn</em></p>
+
 **Scikit-learn** ha estat el marc de treball utilitzat per implementar els algorismes d'aprenentatge supervisat (regressió lineal, polinomial, logística i *Gradient Boosting*) i no supervisat (*K-Means*), així com les eines d'escalat de variables (`StandardScaler`) i mètriques d'avaluació (R2, MAE, WAPE i *Silhouette*).
 
 ### Jupyter Notebook
+
+<p align="center">
+    <img src="./imatges/jupyter.png" alt="Jupyter" width="300">
+</p>
+<p align="center"><em>Fig 5: Jupyter</em></p>
+
 Hem utilitzat **Jupyter Notebook** com a entorn de desenvolupament interactiu per documentar el procés analític pas a pas, combinar codi executable amb explicacions en `Markdown` i generar visualitzacions exploratòries (com la matriu de correlació i histogrames).
 
 ## Anàlisi de les possibles solucions
@@ -213,7 +238,7 @@ L'anàlisi inicial es centra en `sales_history.csv` (1.188 registres), prenent `
 <p align="center">
     <img src="./imatges/Matriu_de_correlació.png" alt="Matriu de correlació" width="600">
 </p>
-<p align="center"><em>Fig 1: Matriu de correlació de les variables inicials respecte a les vendes</em></p>
+<p align="center"><em>Fig 6: Matriu de correlació de les variables inicials respecte a les vendes</em></p>
 
 #### Predictors inicials i hipòtesis
 
@@ -433,8 +458,8 @@ S'aplica el **model congelat** (Ridge, `alpha = 300`, entrenat amb 2022–2024) 
 
 | Persona | Tasques |
 |:---|:---|
-| **Joel** | [tasques] |
-| **Sofia** | [tasques] |
+| **Joel** | Regressió lineal, problemes de qualitat detectats i exemples en el CP1. Preparació reproduïble i exemple de mala imputació en el CP2. Taula de segments i accions comercials en el CP3. Factors que influeixen en el model i límits de la interpretació en el CP5. Creació de la memòria i transformar-a a PDF. |
+| **Sofia** | Regressió polinòmica. Pregunta principal, decisió de negoci i pregunta secundària en el CP1. Taula de particions en el CP2. Preparació, tècnica i perfils en el CP3. Deixar per escrit el model i avaluació gener–juny de 2026 en el CP5. Diagrama PowerBI i secció de PowerBI en la presentació. |
 | **Sonia** | Regressió logística multiclasse; *baseline*, model alternatiu i mètrica; resum del CP1. Llista de predictors i resultats de les referències. Comparativa de models i decisió final abans d'obrir el test: model Ridge (`cp3.ipynb`, secció 5). Previsió de juliol 2026 i recomanacions d'estoc i de campanya amb el seu grau de confiança (Bloc 4). Presentació en Canva. |
 
 ## Conclusió
@@ -447,6 +472,7 @@ D'una banda, s'ha demostrat que l'estacionalitat (`lag_12`) és un factor determ
 
 ## Bibliografia
 
+- Repositori del projecte: https://github.com/JoelFusterBosch/BiciTierraMarket
 - Documentació oficial de Pandas: https://pandas.pydata.org/docs/
 - Documentació oficial de Scikit-learn (Regressió i Clustering K-Means): https://scikit-learn.org/stable/
 - Documentació oficial de NumPy: https://numpy.org/doc/
